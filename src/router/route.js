@@ -184,8 +184,8 @@ export const appRouter = [
   {
     path: '/access',
     name: 'access',
-    title: '权限管理',
     meta: {
+      title: '权限管理',
       requireAuth: true
     },
     component: Layout,
@@ -193,8 +193,18 @@ export const appRouter = [
       {
         path: 'index',
         name: 'access_index',
-        title: '权限管理',
+        meta: {
+          title: '权限管理'
+        },
         component: () => import('src/pages/access/index')
+      },
+      {
+        path: 'role',
+        name: 'role_index',
+        meta: {
+          title: '角色管理'
+        },
+        component: () => import('src/pages/access/role')
       }
     ]
   },

@@ -12,9 +12,9 @@
       <el-col :span='24'>
         <el-card>
           <div slot="header">
-            账号管理
+            角色管理
           </div>
-          <el-form :inline="true"  class="demo-form-inline">
+          <el-form :inline="true" class="demo-form-inline">
             <el-form-item label="">
               <el-button class="w150" type="success" @click="addUserDialog()">添加账号</el-button>
             </el-form-item>
@@ -26,21 +26,8 @@
               :data='tableData'
               border
               :row-class-name="addRowClass">
-              <el-table-column label="用户账号" prop="usercode" align="center"></el-table-column>
-              <el-table-column label="用户名" prop="username" align="center"></el-table-column>
-              <el-table-column label="角色名称" prop="roleName" align="center"></el-table-column>
-              <el-table-column label="账号状态" align="center">
-                <template slot-scope="scope">
-                  {{lockedStatus[scope.row.locked].label}}
-                  <el-switch @change="changeLock(scope.row)"
-                             v-model="scope.row.locked"
-                             active-color="#13ce66"
-                             inactive-color="#ff4949"
-                             active-value="0"
-                             inactive-value="1"  >
-                  </el-switch>
-                </template>
-              </el-table-column>
+              <el-table-column label="角色名称" prop="name" align="center"></el-table-column>
+              <el-table-column label="创建时间" prop="createTime" align="center"></el-table-column>
               <el-table-column label="操作 " align="center">
                 <template slot-scope="scope">
                   <el-button type="primary" icon="el-icon-edit" circle @click="editDialog(scope.row)"></el-button>
@@ -59,65 +46,47 @@
             </el-pagination>
 
             <template>
-              <el-dialog class="editUser"
+              <el-dialog class="editRole"
                          title="编辑"
-                         :visible.sync="editUserdialog"
+                         :visible.sync="editRoledialog"
                          width="30%"
                          :before-close="handleClose"
                          :modal-append-to-body='false'>
                 <el-form ref="form" :model="editData" label-width="100px">
-                  <el-form-item label="账号" prop="usercode">
-                    <el-input v-model="editData.usercode"></el-input>
+                  <el-form-item label="角色名称" prop="name">
+                    <el-input v-model="editData.name"></el-input>
                   </el-form-item>
-                  <el-form-item label="用户名" prop="username">
-                    <el-input v-model="editData.username"></el-input>
-                  </el-form-item>
-                  <el-form-item label="角色" prop="roleId">
-                    <el-select v-model="editData.roleId" placeholder="请选择角色">
-                      <el-option
-                        v-for="item in roleData"
-                        :key="item.id"
-                        :label="item.name"
-                        :value="item.id">
-                      </el-option>
-                    </el-select>
-                  </el-form-item>
-                </el-form>
-                <span slot="footer" class="dialog-footer">
+                  <span slot="footer" class="dialog-footer">
               <el-button @click=handleClose()>取 消</el-button>
-              <el-button type="primary" @click="editUser(editData)">确 定</el-button>
+              <el-button type="primary" @click="editRole(editData)">确 定</el-button>
             </span>
+                </el-form>
               </el-dialog>
 
-              <el-dialog class="addUser"
-                         title="添加用户"
-                         :visible.sync="addUserdialog"
+              <el-dialog class="addRole"
+                         title="添加角色"
+                         :visible.sync="adddialog"
                          width="30%"
-                         :before-close="addUserClose"
+                         :before-close="addClose"
                          :modal-append-to-body='false'>
-                <el-form ref="form" :model="addData" label-width="100px"  :rules="rules">
-                  <el-form-item label="账号" prop="usercode">
-                    <el-input v-model="addData.usercode"></el-input>
+                <el-form ref="form" :model="addData" label-width="30%" :rules="rules">
+                  <el-form-item label="角色名称" prop="usercode">
+                    <el-input v-model="addData.name"></el-input>
                   </el-form-item>
-                  <el-form-item label="用户名" prop="username">
-                    <el-input v-model="addData.username"></el-input>
+                  <el-form-item label="视图" prop="view">
+                    <el-tree
+                      :data="treeData"
+                      show-checkbox
+                      node-key="id"
+                      :default-expanded-keys="[1, 1]"
+                      :default-checked-keys="[1]"
+                      :props="defaultProps">
+                    </el-tree>
                   </el-form-item>
-                  <el-form-item label="密码" prop="password">
-                    <el-input v-model="addData.password" type="password"></el-input>
-                  </el-form-item>
-                  <el-form-item label="角色" prop="roleId">
-                    <el-select v-model="addData.roleId" placeholder="请选择角色">
-                      <el-option
-                        v-for="item in roleData"
-                        :key="item.id"
-                        :label="item.name"
-                        :value="item.id">
-                      </el-option>
-                    </el-select>
-                  </el-form-item>
+
                 </el-form>
                 <span slot="footer" class="dialog-footer">
-              <el-button @click=addUserClose()>取 消</el-button>
+                <el-button @click=addClose()>取 消</el-button>
               <el-button type="primary" @click="addUser(addData)">确 定</el-button>
             </span>
               </el-dialog>
@@ -141,6 +110,7 @@
     created() {
       this.getTableData();
       this.getRoleData();
+      this.getTreePer();
     },
     data() {
       return {
@@ -149,34 +119,20 @@
         pagesize: 10,
         currentpage: 1,
         total: 0,
-        lockedStatus: [
-          {
-            label: '激活',
-            value: 0
-          },
-          {
-            label: '锁定',
-            value: 1
-          }
-        ],
-        editUserdialog: false,
-        addUserdialog: false,
+        editRoledialog: false,
+        adddialog: false,
         editData: {},
         addData: {},
         roleData: [],
         rules: {
-          usercode: [
-            {required: true, message: '账号不能为空', trigger: 'blur'}
-          ],
-          username: [
-            {required: true, message: '用户名不能为空', trigger: 'blur'}
-          ],
-          password: [
-            {required: true, message: '密码不能为空', trigger: 'blur'}
-          ],
-          roleId: [
-            {required: true, message: '角色不能为空', trigger: 'blur'}
+          name: [
+            {required: true, message: '角色名称不能为空', trigger: 'blur'}
           ]
+        },
+        treeData: [],
+        defaultProps: {
+          children: 'children',
+          label: 'title'
         }
       }
     },
@@ -185,8 +141,8 @@
         let params = {
           pagesize: this.pagesize,
           currentpage: this.currentpage
-        }
-        this.$get('/system/sysuser/page', params)
+        };
+        this.$get('/system/sysrole/page', params)
           .then(
             response => {
               if (response.status === 200) {
@@ -194,6 +150,23 @@
                   this.tableData = response.data.data.pp;
                   this.total = response.data.data.page.totalNumber;
                   this.loading = false;
+                } else if (response.data.success === false) {
+                  this.$message.error(response.data.error);
+                } else {
+                  this.$message.error('服务异常');
+                }
+              }
+            }
+          );
+      },
+      // 获得权限视图
+      getTreePer() {
+        this.$get('/system/permission/treePer')
+          .then(
+            response => {
+              if (response.status === 200) {
+                if (response.data.success === true) {
+                  this.treeData = response.data.data;
                 } else if (response.data.success === false) {
                   this.$message.error(response.data.error);
                 } else {
@@ -223,15 +196,15 @@
       // 编辑用户信息弹窗打开
       editDialog(row) {
         this.editData = row;
-        this.editUserdialog = true;
+        this.editRoledialog = true;
       },
       // 添加用户
       addUserDialog() {
-        this.addUserdialog = true;
+        this.adddialog = true;
       },
-      addUserClose() {
+      addClose() {
         this.addData = {};
-        this.addUserdialog = false;
+        this.adddialog = false;
       },
       addUser(row) {
         let params = this.$utils.paramData(row);
@@ -249,19 +222,18 @@
                 }
               }
               // 关闭弹框
-              this.addUserdialog = false;
+              this.adddialog = false;
               this.getTableData();
             }
           );
       },
 
       // 更新用户信息
-      editUser(row) {
-        console.log(row);
-        this.$delete(row, 'createTime')
-        this.$delete(row, 'updateTime')
+      editRole(row) {
+        this.$delete(row, 'createTime');
+        this.$delete(row, 'updateTime');
         let params = this.$utils.paramData(row);
-        this.$post('/system/sysuser/update', params)
+        this.$post('/system/sysrole/update', params)
           .then(
             response => {
               if (response.status === 200) {
@@ -274,13 +246,13 @@
                 }
               }
               // 关闭弹框
-              this.editUserdialog = false;
+              this.editRoledialog = false;
               this.getTableData();
             }
           );
       },
       handleClose() {
-        this.editUserdialog = false;
+        this.editRoledialog = false;
         this.editData = {};
       },
       // 更改用户是否锁定状态
@@ -288,7 +260,7 @@
         let data = {
           id: row.id,
           locked: row.locked
-        }
+        };
         let params = this.$utils.paramData(data);
         this.$post('/system/sysuser/changeLocked', params)
           .then(
@@ -314,7 +286,7 @@
         }).then(() => {
           let data = {
             id: id
-          }
+          };
           let params = this.$utils.paramData(data);
           this.$post('/system/sysuser/del', params)
             .then(
