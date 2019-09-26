@@ -80,7 +80,7 @@
                       :on-success="uploadSuccess"
                       :on-remove="handleRemove"
                       :on-error="uploadFailed">
-                      <img v-if="editData.path" :src="imageUrl" class="avatar">
+                      <img v-if="imageUrl" :src="imageUrl" class="avatar">
                       <i v-else class="el-icon-plus avatar-uploader-icon"></i>
                     </el-upload>
                   </el-form-item>
@@ -97,6 +97,10 @@
                       </el-option>
                     </el-select>
                   </el-form-item>
+                  <div id="quill-editor" style="height: 600px"></div>
+                  <div class="quill-count">
+                    <span class="number">{{richCurrentLength}}/{{richMaxLength}}</span>
+                  </div>
                   <el-form-item label="内容" prop="content">
 
                   </el-form-item>
@@ -154,10 +158,6 @@
         </el-card>
       </el-col>
     </el-row>
-    <div id="quill-editor" style="height: 600px"></div>
-    <div class="quill-count">
-      <span class="number">{{richCurrentLength}}/{{richMaxLength}}</span>
-    </div>
   </div>
 
 </template>
