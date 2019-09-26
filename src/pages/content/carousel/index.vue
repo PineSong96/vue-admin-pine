@@ -179,7 +179,6 @@
   export default {
     created() {
       this.getTableData();
-      this.getCarouselType();
     },
     data() {
       return {

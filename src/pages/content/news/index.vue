@@ -44,8 +44,26 @@
               @size-change="handleSizeChange"
               @current-change="handleCurrentChange">
             </el-pagination>
-
             <template>
+              <el-dialog class="upload"
+                         title="上传图片"
+                         :visible.sync="uploadialog"
+                         width="300px"
+                         :before-close="uploadClose"
+                         :modal-append-to-body='false'>
+                  <el-upload
+                    class="avatar-uploader"
+                    :action="uploadUrl"
+                    :show-file-list="false"
+                    :before-upload="beforeAvatarUpload"
+                    :on-success="richUploadSuccess"
+                    :on-remove="handleRemove"
+                    :on-error="uploadFailed">
+                    <img v-if="imageUrl" :src="imageUrl" class="avatar">
+                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                  </el-upload>
+              </el-dialog>
+
               <el-dialog class="editData"
                          title="编辑"
                          :visible.sync="editDatadialog"
@@ -80,7 +98,7 @@
                     </el-select>
                   </el-form-item>
                   <el-form-item label="内容" prop="content">
-                    <el-input v-model="editData.content"></el-input>
+
                   </el-form-item>
                 </el-form>
                 <span slot="footer" class="dialog-footer">
@@ -123,7 +141,6 @@
                     </el-select>
                   </el-form-item>
                   <el-form-item label="内容" prop="content">
-                    <el-input v-model="editData.content"></el-input>
                   </el-form-item>
                 </el-form>
                 <span slot="footer" class="dialog-footer">
@@ -137,6 +154,10 @@
         </el-card>
       </el-col>
     </el-row>
+    <div id="quill-editor" style="height: 600px"></div>
+    <div class="quill-count">
+      <span class="number">{{richCurrentLength}}/{{richMaxLength}}</span>
+    </div>
   </div>
 
 </template>
@@ -145,13 +166,32 @@
   import {formatDate} from 'src/utils/utils';
   import score from 'src/components/Score/index';
   import * as Api from 'src/utils/server'
+  import 'quill/dist/quill.core.css'
+  import 'quill/dist/quill.snow.css'
+  import Quill from 'quill'
+  import ImageResize from 'quill-image-resize-module'
+  Quill.register('modules/imageResize', ImageResize)
+
 
   const POSITIVE = 0;
   const NEGATIVE = 1;
+
+
   export default {
+    // 富文本工具栏配置
+    toolbarOptions: [
+      [{ 'size': ['small', false, 'large', 'huge'] }], // 字体大小
+      [{ 'header': [1, 2, 3, 4, 5, 6, false] }],     // 几级标题
+      ['bold', 'italic', 'underline', 'strike'],    // 加粗，斜体，下划线，删除线
+      [{ 'indent': '-1' }, { 'indent': '+1' }],     // 缩进
+      [{ 'color': [] }, { 'background': [] }],     // 字体颜色，字体背景颜色
+      [{ 'align': [] }],    // 对齐方式
+      ['clean'],    // 清除字体样式
+      ['image'],
+      ['custom']  // 添加一个自定义功能
+    ],
     created() {
       this.getTableData();
-      this.getCarouselType();
     },
     data() {
       return {
@@ -162,6 +202,7 @@
         total: 0,
         editDatadialog: false,
         addDatadialog: false,
+        uploadialog: false,
         editData: {},
         addData: {},
         uploadUrl: Api.imgUrl,
@@ -179,6 +220,24 @@
           type: [
             {required: true, message: '请选择类型', trigger: 'blur'}
           ]
+        },
+        // 富文本内容
+        content: '',
+        richMaxLength: 800,
+        richCurrentLength: 0,
+        indexPos: ''
+      }
+    },
+    watch: {
+      content() {
+        // 富文本内容长度
+        this.richCurrentLength = this.quill.getLength() - 1
+        let numWrapper = document.querySelector('.quill-count')
+        console.log(numWrapper)
+        if (this.richCurrentLength > this.richMaxLength) {
+          numWrapper.style.color = 'red'
+        } else {
+          numWrapper.style.color = '#666'
         }
       }
     },
@@ -271,7 +330,10 @@
         this.editDatadialog = false;
         this.editData = {};
       },
-
+      uploadClose() {
+        this.uploadialog = false;
+        this.imageUrl = '';
+      },
       // 删除信息
       deleteData(id) {
         this.$confirm('确定要删除吗?', '提示', {
@@ -325,18 +387,8 @@
           console.log(response.data);
         }
       },
-      // 上传多图
-      uploadSuccessOther(response, file, fileList) {
-        if (fileList.length > 0) {
-          fileList.forEach((item, index) => {
-            this.imgUrls.push(item.response.data[0]);
-          });
-          sessionStorage.setItem('imgUrls', fileList);
-        }
-      },
       // 图片列表删除
       handleRemove(file, fileList) {
-
       },
       // 上传失败
       uploadFailed(err, file, fileList) {
@@ -358,7 +410,126 @@
         if (row.rateType === NEGATIVE) {
           return 'warning-row';
         }
+      },
+
+      // 富文本
+      // 富文本中的图片上传
+      // 自定义富文本的图片上传
+      imageFunction(val) {
+        // let res = {
+        //   data: [
+        //     'http://shopimg.jetour.com.cn/20190926/1569480246117.jpg'
+        //   ]
+        // }
+        if (val) {
+          this.indexPos = this.quill.getSelection().index;
+          this.uploadialog = true;
+        } else {
+          this.quill.format('image', false)
+        }
+      },
+      richUploadSuccess(res) {
+        this.uploadialog = false;
+        /**
+         * 如果上传成功
+         * ps：不同的上传接口，判断是否成功的标志也不一样，需要看后端的返回
+         * 通常情况下，应该有返回上传的结果状态（是否上传成功）
+         * 以及，图片上传成功后的路径
+         * 将路径赋值给 imgUrl
+         */
+        if (res) {
+          let imgUrl = res.data[0];
+          // 获取光标所在位置
+          console.log(this.quill)
+          let length = this.indexPos;
+          // 插入图片，res为服务器返回的图片链接地址
+          this.quill.insertEmbed(length, 'image', imgUrl)
+          // 调整光标到最后
+          this.quill.setSelection(length + 1)
+        } else {
+          // 提示信息，需引入Message
+          this.$message.error('图片插入失败')
+        }
+      },
+      onEditorChange(eventName, ...args) {
+        if (eventName === 'text-change') {
+          // args[0] will be delta
+          // 获取富文本内容
+          this.content = document.querySelector('#quill-editor').children[0].innerHTML
+        } else if (eventName === 'selection-change') {
+          // args[0] will be old range
+        }
+      },
+      // 初始化自定义的quill工具栏
+      // 拿到quill实例以后，在执行自定义toolbar的操作
+      initCustomQullToolbar() {
+        const timeButton = document.querySelector('.ql-custom')
+        timeButton.style.cssText = 'width: 80px; outline: none;'
+        timeButton.innerText = '自定义'
+      },
+      // 给自定义的按钮功能加上方法
+      quillCustomFunction() {
+        const h = this.$createElement
+        this.$notify({
+          type: 'success',
+          title: '自定义一个quill功能',
+          message: h('i', {style: 'color: teal'}, '可不可以让我自定义一个 Quill 的功能？可不可以让我自定义一个 Quill 的功能？')
+        })
+      },
+      initQuill() {
+        const quill = new Quill('#quill-editor', {
+          // 编辑器配置选项
+          theme: 'snow',
+          placeholder: 'Compose an epic...',
+          debug: 'error',
+          modules: {
+            toolbar: {
+              container: this.$options.toolbarOptions,
+              handlers: {  // 自定义功能
+                'image': this.imageFunction,
+                'custom': this.quillCustomFunction
+              }
+            },
+            imageResize: {
+              modules: ['Resize', 'DisplaySize', 'Toolbar'],
+              handleStyles: {
+                backgroundColor: 'black',
+                border: 'none',
+                color: 'white'
+              },
+              displayStyles: {
+                backgroundColor: 'black',
+                border: 'none',
+                color: 'white'
+              },
+              toolbarStyles: {
+                backgroundColor: 'black',
+                border: 'none',
+                color: 'white'
+              },
+              toolbarButtonStyles: {},
+              toolbarButtonSvgStyles: {}
+            }
+          }
+        })
+        this.quill = quill
+        // 拿到quill实例以后，在执行自定义toolbar的操作
+        this.initCustomQullToolbar()
+        /**
+         * 监听富文本变化
+         * editor-change 包括 text-change、selection-change
+         * 你也可以分别监听 text-change 和 selection-change
+         * 文档：https://quilljs.com/docs/api/#text-change
+         */
+        quill.on('editor-change', this.onEditorChange)
       }
+    },
+    mounted() {
+      this.initQuill()
+    },
+    beforeDestroy() {
+      this.quill = null
+      delete this.quill
     },
     filters: {
       rateTypeToText(rateType) {
@@ -417,6 +588,40 @@
       &:last-child {
         margin-right: 0;
       }
+    }
+    .content-wrapper {
+      max-width: 80%;
+      min-width: 800px;
+      margin: 0 auto;
+      padding-top: 20px;
+    }
+    .tips {
+      width: 600px;
+      padding: 15px 20px;
+      box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+      line-height: 2;
+    }
+    .font {
+      font-size: 18px;
+    }
+    #quill-editor {
+      width: 80%;
+      height: 500px;
+    }
+    /*字数统计*/
+    .quill-count {
+      border: 1px solid #ccc;
+      border-top: none;
+      height: 30px;
+      line-height: 30px;
+      text-align: right;
+      padding-right: 10px;
+      font-size: 14px;
+      color: #666;
+    }
+    /* 内容返显 */
+    .ql-editor {
+      margin-bottom: 50px;
     }
   }
 </style>
