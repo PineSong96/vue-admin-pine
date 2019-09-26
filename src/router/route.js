@@ -53,64 +53,29 @@ export const otherRouter = {
 // 作为Main组件的子页面展示并且在左侧菜单显示的路由写在appRouter里
 export const appRouter = [
   {
-    path: '/tables',
-    name: 'tables',
-    meta: {
-      title: '表格管理',
-      requireAuth: true
-    },
-    component: Layout,
-    children: [
-      {
-        path: 'basic',
-        name: 'basic',
-        meta: {
-          title: '基本表格'
-        },
-        component: () => import('src/pages/tables/basic')
-      },
-      {
-        path: 'sort',
-        name: 'sort',
-        meta: {
-          title: '排序表格'
-        },
-        component: () => import('src/pages/tables/sort')
-      },
-      {
-        path: 'filter',
-        name: 'filter',
-        title: '筛选表格',
-        component: () => import('src/pages/tables/filter')
-      }
-    ]
-  },
-  {
-    path: '/charts',
-    name: 'charts',
-    title: 'echarts图表',
+    path: '/content',
+    name: 'content',
+    title: '内容管理',
     meta: {
       requireAuth: true
     },
     component: Layout,
     children: [
       {
-        path: 'bar',
-        name: 'bar',
-        title: '柱状图',
-        component: () => import('src/pages/charts/bar')
+        path: 'carousel',
+        name: 'carousel',
+        meta: {
+          title: 'Banner'
+        },
+        component: () => import('src/pages/content/carousel/index')
       },
       {
-        path: 'line',
-        name: 'line',
-        title: '折线图',
-        component: () => import('src/pages/charts/line')
-      },
-      {
-        path: 'pie',
-        name: 'pie',
-        title: '饼图',
-        component: () => import('src/pages/charts/pie')
+        path: 'news',
+        name: 'news',
+        meta: {
+          title: '新闻活动'
+        },
+        component: () => import('src/pages/content/news/index')
       }
     ]
   },

@@ -24,7 +24,6 @@ router.beforeEach((to, form, next) => {
   });
 
   // 设置window.document.title 的名称
-  console.log(to)
   setTitle(to.meta.title);
 
   if (!to.matched.length) {

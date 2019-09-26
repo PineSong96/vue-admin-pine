@@ -1,11 +1,3 @@
-<%--
-@Project Name: vue-admin
-@Author: luichooy
-@Date: 2017-11-16 12:27
-@Email: luichooy@163.com
-@Idea: WebStorm
---%>
-
 <template>
   <div class='basic'>
     <el-row>
@@ -316,7 +308,7 @@
             id: id
           }
           let params = this.$utils.paramData(data);
-          this.$post('/system/sysuser/del', params)
+          this.$del('/system/sysuser/del', params)
             .then(
               response => {
                 if (response.status === 200) {

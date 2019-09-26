@@ -31,8 +31,17 @@ const lineData = require('../src/data/charts/line');
 const pieData = require('../src/data/charts/pie');
 const tableData = require('../src/data/tables/tables');
 const formData = require('../src/data/form/form');
+//轮播类型
+const carouselType = require('../src/data/carousel/carousel');
 
 var apiRoutes = express.Router();
+
+apiRoutes.get('/carouselType', function (req, res) {
+  res.json({
+    errno: 0,
+    data: carouselType
+  });
+});
 
 apiRoutes.get('/addressData', function (req, res) {
   res.json({

@@ -123,7 +123,20 @@ export function put(url, data = {}, config = {}) {
       })
   })
 }
-
+/*
+ * del 请求
+ * */
+export function del(url, data = {}, config = {}) {
+  return new Promise((resolve, reject) => {
+    axios.delete(url, data, config)
+      .then(response => {
+        resolve(response);
+      })
+      .catch(err => {
+        reject(err);
+      })
+  })
+}
 /*
  * patch 请求
  * */

@@ -74,8 +74,7 @@
         checkCode: '',
         form: {
           username: '',
-          password: '',
-          yanzhengma: ''
+          password: ''
         },
         rules: {
           username: [

@@ -35,7 +35,7 @@ import 'src/assets/styles/iconfont.css';
  * 引入axiso调用接口
  */
 import axios from 'axios'
-import {get, patch, post, put} from './utils/http'
+import {get, patch, post, put, del} from './utils/http'
 import {utils} from './utils/config';
 
 Vue.prototype.$utils = utils;
@@ -44,6 +44,7 @@ Vue.prototype.$get = get;
 Vue.prototype.$post = post;
 Vue.prototype.$put = put;
 Vue.prototype.$patch = patch;
+Vue.prototype.$del = del;
 Vue.use(ElementUI);
 Vue.component('chart', ECharts);
 
